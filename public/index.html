@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flibusta Book Downloader</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .search-section {
+            padding: 30px;
+            text-align: center;
+        }
+
+        .search-input {
+            width: 100%;
+            max-width: 500px;
+            padding: 15px 20px;
+            font-size: 1.1em;
+            border: 2px solid #e1e8ed;
+            border-radius: 25px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .search-input:focus {
+            border-color: #4facfe;
+        }
+
+        .search-button {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: transform 0.2s;
+        }
+
+        .search-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .search-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results-section {
+            padding: 0 30px 30px;
+        }
+
+        .status {
+            text-align: center;
+            padding: 20px;
+            font-size: 1.1em;
+            color: #666;
+        }
+
+        .books-list {
+            display: grid;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .book-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .book-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-color: #4facfe;
+        }
+
+        .book-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .book-author {
+            color: #666;
+            font-size: 1em;
+        }
+
+        .formats-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .formats-title {
+            text-align: center;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .formats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+        }
+
+        .format-button {
+            background: white;
+            border: 2px solid #4facfe;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .format-button:hover {
+            background: #4facfe;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .format-icon {
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+
+        .download-section {
+            text-align: center;
+            padding: 30px;
+        }
+
+        .download-button {
+            background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .download-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            color: #dc3545;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .success {
+            color: #155724;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+            
+            .search-section, .results-section, .download-section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 Flibusta Downloader</h1>
+            <p>Найдите и скачайте книги прямо в браузере</p>
+        </div>
+
+        <div class="search-section">
+            <input type="text" class="search-input" id="searchInput" placeholder="Введите название книги или автора...">
+            <button class="search-button" id="searchButton">🔍 Найти книги</button>
+        </div>
+
+        <div class="results-section">
+            <div id="status" class="status hidden"></div>
+            <div id="results" class="books-list hidden"></div>
+            <div id="formats" class="formats-section hidden">
+                <h3 class="formats-title">📥 Выберите формат для скачивания</h3>
+                <div class="formats-grid" id="formatsGrid"></div>
+            </div>
+        </div>
+
+        <div class="download-section hidden" id="downloadSection">
+            <button class="download-button" id="downloadButton">
+                <span id="downloadText">📥 Скачать книгу</span>
+            </button>
+            <div id="downloadStatus"></div>
+        </div>
+    </div>
+
+    <script>
+        class FlibustaDownloader {
+            constructor() {
+                this.BASE_URL = '';
+                this.currentBook = null;
+                this.selectedFormat = null;
+                this.books = [];
+                
+                this.initializeElements();
+                this.bindEvents();
+            }
+
+            initializeElements() {
+                this.searchInput = document.getElementById('searchInput');
+                this.searchButton = document.getElementById('searchButton');
+                this.statusDiv = document.getElementById('status');
+                this.resultsDiv = document.getElementById('results');
+                this.formatsDiv = document.getElementById('formats');
+                this.formatsGrid = document.getElementById('formatsGrid');
+                this.downloadSection = document.getElementById('downloadSection');
+                this.downloadButton = document.getElementById('downloadButton');
+                this.downloadText = document.getElementById('downloadText');
+                this.downloadStatus = document.getElementById('downloadStatus');
+            }
+
+            bindEvents() {
+                this.searchButton.addEventListener('click', () => this.searchBooks());
+                this.searchInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.searchBooks();
+                });
+                this.downloadButton.addEventListener('click', () => this.downloadBook());
+            }
+
+            showStatus(message, isError = false) {
+                this.statusDiv.textContent = message;
+                this.statusDiv.className = isError ? 'status error' : 'status';
+                this.statusDiv.classList.remove('hidden');
+            }
+
+            hideStatus() {
+                this.statusDiv.classList.add('hidden');
+            }
+
+            showLoading(text = 'Ищу книги...') {
+                this.searchButton.disabled = true;
+                this.searchButton.innerHTML = '<span class="loading"></span> ' + text;
+            }
+
+            hideLoading() {
+                this.searchButton.disabled = false;
+                this.searchButton.innerHTML = '🔍 Найти книги';
+            }
+
+            async searchBooks() {
+                const query = this.searchInput.value.trim();
+                
+                if (query.length < 2) {
+                    this.showStatus('❌ Запрос слишком короткий. Введите хотя бы 2 символа.', true);
+                    return;
+                }
+
+                this.showLoading();
+                this.hideStatus();
+                this.resultsDiv.classList.add('hidden');
+                this.formatsDiv.classList.add('hidden');
+                this.downloadSection.classList.add('hidden');
+
+                try {
+                    const response = await fetch(`/api/search?query=${encodeURIComponent(query)}`);
+                    if (!response.ok) throw new Error('Failed to search books');
+                    
+                    this.books = await response.json();
+                    
+                    if (this.books.length === 0) {
+                        this.showStatus('📚 Книги по запросу не найдены');
+                    } else {
+                        this.displayBooks();
+                    }
+                } catch (error) {
+                    this.showStatus(`❌ Ошибка поиска: ${error.message}`, true);
+                } finally {
+                    this.hideLoading();
+                }
+            }
+
+            displayBooks() {
+                this.resultsDiv.innerHTML = '';
+                
+                this.books.forEach(book => {
+                    const bookCard = document.createElement('div');
+                    bookCard.className = 'book-card';
+                    bookCard.innerHTML = `
+                        <div class="book-title">${this.escapeHtml(book.title)}</div>
+                        <div class="book-author">👤 ${this.escapeHtml(book.author)}</div>
+                    `;
+                    bookCard.addEventListener('click', () => this.selectBook(book));
+                    this.resultsDiv.appendChild(bookCard);
+                });
+
+                this.resultsDiv.classList.remove('hidden');
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            async selectBook(book) {
+                this.currentBook = book;
+                this.showStatus(`Выбрана книга: ${book.title}`);
+                
+                try {
+                    const response = await fetch(`/api/book/${book.id}/formats`);
+                    if (!response.ok) throw new Error('Failed to get formats');
+                    
+                    const formats = await response.json();
+                    this.displayFormats(formats);
+                } catch (error) {
+                    this.showStatus(`❌ Ошибка получения форматов: ${error.message}`, true);
+                }
+            }
+
+            displayFormats(formats) {
+                this.formatsGrid.innerHTML = '';
+                
+                formats.forEach(format => {
+                    const formatButton = document.createElement('div');
+                    formatButton.className = 'format-button';
+                    formatButton.innerHTML = `
+                        <div class="format-icon">${this.getFormatIcon(format.extension)}</div>
+                        <div>${format.name}</div>
+                    `;
+                    formatButton.addEventListener('click', () => this.selectFormat(format));
+                    this.formatsGrid.appendChild(formatButton);
+                });
+
+                this.formatsDiv.classList.remove('hidden');
+            }
+
+            getFormatIcon(extension) {
+                const icons = {
+                    'fb2': '📖',
+                    'epub': '📱',
+                    'mobi': '📟',
+                    'pdf': '📄',
+                    'txt': '📝',
+                    'doc': '📄',
+                    'docx': '📄',
+                    'rtf': '📄'
+                };
+                return icons[extension.toLowerCase()] || '📁';
+            }
+
+            selectFormat(format) {
+                this.selectedFormat = format;
+                this.showStatus(`Выбран формат: ${format.name}`);
+                this.downloadSection.classList.remove('hidden');
+            }
+
+            async downloadBook() {
+                if (!this.currentBook || !this.selectedFormat) {
+                    this.showStatus('❌ Сначала выберите книгу и формат', true);
+                    return;
+                }
+
+                this.downloadButton.disabled = true;
+                this.downloadText.innerHTML = '<span class="loading"></span> Скачиваю...';
+                this.downloadStatus.innerHTML = '';
+
+                try {
+                    // Создаем имя файла
+                    const filename = `${this.currentBook.author} - ${this.currentBook.title}.${this.selectedFormat.extension}`;
+                    
+                    // Создаем ссылку для скачивания
+                    const downloadUrl = `/api/download?url=${encodeURIComponent(this.selectedFormat.url)}&filename=${encodeURIComponent(filename)}`;
+                    
+                    // Создаем временный элемент для скачивания
+                    const link = document.createElement('a');
+                    link.href = downloadUrl;
+                    link.download = filename;
+                    link.style.display = 'none';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    this.downloadStatus.innerHTML = `
+                        <div class="success">
+                            ✅ Начинается скачивание книги "${this.currentBook.title}" в формате ${this.selectedFormat.name}!
+                        </div>
+                    `;
+                    
+                } catch (error) {
+                    this.downloadStatus.innerHTML = `
+                        <div class="error">
+                            ❌ Ошибка скачивания: ${error.message}
+                        </div>
+                    `;
+                } finally {
+                    this.downloadButton.disabled = false;
+                    this.downloadText.innerHTML = '📥 Скачать книгу';
+                }
+            }
+        }
+
+        // Инициализация приложения
+        document.addEventListener('DOMContentLoaded', () => {
+            new FlibustaDownloader();
+        });
+    </script>
+</body>
+</html>
